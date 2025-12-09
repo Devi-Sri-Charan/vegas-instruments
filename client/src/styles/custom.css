@@ -1,0 +1,142 @@
+body {
+  font-family: 'Montserrat', sans-serif;
+  background: #f7f9fc;
+  color: #0e2140;
+}
+/* Make app full height so footer can sit at the bottom when content is short */
+html, body, #root {
+  height: 100%;
+}
+
+/* Use flex layout so header/main/footer layout behaves well */
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; /* ensure body is at least full viewport height */
+}
+
+/* Main content should expand to push footer down */
+main.container {
+  flex: 1 0 auto; /* grow, don't force beyond content */
+  padding-top: 1rem; /* small spacing under navbar */
+  padding-bottom: 1rem;
+}
+
+/* Footer styling: keep it at page bottom when content is short */
+.footer {
+  margin-top: auto; /* pushes footer to bottom when main is short */
+  flex-shrink: 0;
+}
+
+/* Ensure sticky navbar does not overlap content: add top padding to main on small screens */
+@media (max-width: 768px) {
+  main.container {
+    padding-top: 0.75rem;
+  }
+}
+
+.navbar-brand { font-weight: 700; }
+.hero {
+  background: linear-gradient(180deg, #0b3a66 0%, #0f4f87 60%);
+  color: white;
+  padding: 3rem 1rem;
+  border-radius: 12px;
+}
+.card-hover:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 10px 20px rgba(14,33,64,0.12);
+  transition: all 0.18s ease;
+}
+.category-card img { height: 180px; object-fit: cover; }
+.spec-table th { width: 30%; font-weight: 600; }
+.footer { background: #0b3a66; color: #fff; padding: 1rem 0; }
+.fade-in {
+  animation: fadeIn 360ms ease both;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ================================
+   DESCRIPTION BOX (Instrument Page)
+   ================================= */
+
+/*
+  Always show ~5 lines of text.
+  If content exceeds 5 lines, vertical scroll appears.
+  No horizontal overflow is allowed.
+*/
+.desc-box {
+  max-height: 8.5em;          /* ≈ 5 lines (line-height * 5.3) */
+  overflow-y: auto;           /* vertical scrollbar if needed */
+  overflow-x: hidden;         /* prevent horizontal scrolling */
+  
+  padding: 14px;
+  border-radius: 10px;
+  background: #ffffff;
+  border: 1px solid rgba(14, 33, 64, 0.08);
+  box-shadow: 0 6px 18px rgba(14, 33, 64, 0.05);
+
+  /* Text formatting */
+  line-height: 1.6;
+  white-space: pre-wrap;      /* preserves newlines, wraps long lines normally */
+  word-break: break-word;     /* prevents extremely long words from breaking layout */
+  font-family: inherit;       /* same font as page */
+  font-size: 1rem;
+  color: #0e2140;
+
+  position: relative;
+}
+
+/* Subtle fade-out at bottom (looks professional) */
+/* Subtle fade-out at bottom (looks professional) */
+/* Subtle fade-out at bottom — only visible when container has overflow */
+.desc-box.has-overflow::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 22px;
+  width: 100%;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1));
+}
+
+/* Scrollbar styling */
+.desc-box::-webkit-scrollbar {
+  width: 8px;
+}
+.desc-box::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.25);
+  border-radius: 4px;
+}
+.desc-box::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.35);
+}
+
+/* ====== UNIVERSAL 4-PER-ROW GRID ====== */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);   /* mobile */
+  gap: 1.2rem;
+  padding: 0 10px;
+}
+
+@media (min-width: 600px) {
+  .card-grid {
+    grid-template-columns: repeat(2, 1fr); /* small tablets */
+  }
+}
+
+@media (min-width: 900px) {
+  .card-grid {
+    grid-template-columns: repeat(3, 1fr); /* tablets */
+  }
+}
+
+@media (min-width: 1200px) {
+  .card-grid {
+    grid-template-columns: repeat(4, 1fr); /* desktop → 4 per row */
+  }
+}
