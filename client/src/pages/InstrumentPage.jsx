@@ -1,44 +1,23 @@
-// client/src/pages/InstrumentPage.jsx
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import api from '../api/api';
 import { useParams } from 'react-router-dom';
 
-/**
- * youtubeEmbedUrl(url)
- * - Accepts many YouTube formats:
- *   - https://www.youtube.com/watch?v=VIDEOID
- *   - https://youtu.be/VIDEOID
- *   - https://www.youtube.com/embed/VIDEOID
- *   - https://www.youtube.com/shorts/VIDEOID
- *   - may include extra query params (e.g. &t=10s) — they are ignored
- *
- * Returns: "https://www.youtube.com/embed/VIDEOID" or null if not recognized
- */
 function youtubeEmbedUrl(url) {
   if (!url) return null;
   try {
     const u = url.trim();
-
-    // 1) direct embed already
     const embedMatch = u.match(/youtube\.com\/embed\/([A-Za-z0-9_-]{6,})/);
     if (embedMatch) return `https://www.youtube.com/embed/${embedMatch[1]}`;
-
-    // 2) youtu.be short link: https://youtu.be/VIDEOID
+    
     const shortMatch = u.match(/youtu\.be\/([A-Za-z0-9_-]{6,})/);
     if (shortMatch) return `https://www.youtube.com/embed/${shortMatch[1]}`;
-
-    // 3) watch?v=VIDEOID or &v=VIDEOID
+    
     const watchMatch = u.match(/[?&]v=([A-Za-z0-9_-]{6,})/);
     if (watchMatch) return `https://www.youtube.com/embed/${watchMatch[1]}`;
-
-    // 4) shorts URL: /shorts/VIDEOID
+    
     const shortsMatch = u.match(/\/shorts\/([A-Za-z0-9_-]{6,})/);
     if (shortsMatch) return `https://www.youtube.com/embed/${shortsMatch[1]}`;
-
-    // 5) fallback: try to find last path segment that looks like id
-    const pathMatch = u.match(/\/([A-Za-z0-9_-]{6,})(?:[?&]|$)/);
-    if (pathMatch) return `https://www.youtube.com/embed/${pathMatch[1]}`;
-
+    
     return null;
   } catch (e) {
     return null;
@@ -48,7 +27,6 @@ function youtubeEmbedUrl(url) {
 export default function InstrumentPage() {
   const { id } = useParams();
   const [instrument, setInstrument] = useState(null);
-  const descBoxRef = useRef(null);
 
   useEffect(() => {
     async function fetchOne() {
@@ -62,75 +40,70 @@ export default function InstrumentPage() {
     fetchOne();
   }, [id]);
 
-  // overflow fade logic (same as you had)
-  useEffect(() => {
-    function updateOverflow() {
-      const el = descBoxRef.current;
-      if (!el) return;
-      if (el.scrollHeight > el.clientHeight) el.classList.add('has-overflow');
-      else el.classList.remove('has-overflow');
-    }
-    updateOverflow();
-    window.addEventListener('resize', updateOverflow);
-    const ro = new MutationObserver(updateOverflow);
-    if (descBoxRef.current) ro.observe(descBoxRef.current, { childList: true, subtree: true, characterData: true });
-    return () => {
-      window.removeEventListener('resize', updateOverflow);
-      ro.disconnect();
-    };
-  }, [instrument]);
-
-  if (!instrument) return <div>Loading...</div>;
+  if (!instrument) return <div style={{ color: 'var(--text-grey)' }}>Loading...</div>;
 
   const embedUrl = youtubeEmbedUrl(instrument.videoUrl);
 
   return (
-    <div className="row">
-      <div className="col-md-6">
+    <div className="instrument-page-container">
+      {/* Left side - Image */}
+      <div className="instrument-image-section">
         <img
           loading="lazy"
           src={instrument.image || 'https://via.placeholder.com/600x400?text=Instrument'}
           alt={instrument.name}
-          className="img-fluid rounded"
         />
       </div>
 
-      <div className="col-md-6">
-        <h2>{instrument.name}</h2>
+      {/* Right side - Scrollable details */}
+      <div className="instrument-details-section">
+        <div className="instrument-details-scroll">
+          <h2>{instrument.name}</h2>
 
-        <div className="mb-3">
-          <h5>Description</h5>
-          <div ref={descBoxRef} className="desc-box text-muted">{instrument.description || ''}</div>
+          {instrument.description && (
+            <>
+              <h5>Description</h5>
+              <div className="desc-box">{instrument.description}</div>
+            </>
+          )}
+
+          {embedUrl && (
+            <>
+              <h5>Demo Video</h5>
+              <div className="video-container">
+                <div className="ratio ratio-16x9">
+                  <iframe
+                    src={embedUrl}
+                    title="Demo Video"
+                    allowFullScreen
+                    loading="lazy"
+                    sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+                    style={{ border: 'none' }}
+                  />
+                </div>
+              </div>
+            </>
+          )}
+
+          {instrument.pdf && (
+            <>
+              <h5>Datasheet / Manual</h5>
+              <a 
+                href={instrument.pdf} 
+                target="_blank" 
+                rel="noreferrer" 
+                className="pdf-link"
+              >
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                  <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+                  <path d="M4.603 14.087a.81.81 0 0 1-.438-.42c-.195-.388-.13-.776.08-1.102.198-.307.526-.568.897-.787a7.68 7.68 0 0 1 1.482-.645 19.697 19.697 0 0 0 1.062-2.227 7.269 7.269 0 0 1-.43-1.295c-.086-.4-.119-.796-.046-1.136.075-.354.274-.672.65-.823.192-.077.4-.12.602-.077a.7.7 0 0 1 .477.365c.088.164.12.356.127.538.007.188-.012.396-.047.614-.084.51-.27 1.134-.52 1.794a10.954 10.954 0 0 0 .98 1.686 5.753 5.753 0 0 1 1.334.05c.364.066.734.195.96.465.12.144.193.32.2.518.007.192-.047.382-.138.563a1.04 1.04 0 0 1-.354.416.856.856 0 0 1-.51.138c-.331-.014-.654-.196-.933-.417a5.712 5.712 0 0 1-.911-.95 11.651 11.651 0 0 0-1.997.406 11.307 11.307 0 0 1-1.02 1.51c-.292.35-.609.656-.927.787a.793.793 0 0 1-.58.029zm1.379-1.901c-.166.076-.32.156-.459.238-.328.194-.541.383-.647.547-.094.145-.096.25-.04.361.01.022.02.036.026.044a.266.266 0 0 0 .035-.012c.137-.056.355-.235.635-.572a8.18 8.18 0 0 0 .45-.606zm1.64-1.33a12.71 12.71 0 0 1 1.01-.193 11.744 11.744 0 0 1-.51-.858 20.801 20.801 0 0 1-.5 1.05zm2.446.45c.15.163.296.3.435.41.24.19.407.253.498.256a.107.107 0 0 0 .07-.015.307.307 0 0 0 .094-.125.436.436 0 0 0 .059-.2.095.095 0 0 0-.026-.063c-.052-.062-.2-.152-.518-.209a3.876 3.876 0 0 0-.612-.053zM8.078 7.8a6.7 6.7 0 0 0 .2-.828c.031-.188.043-.343.038-.465a.613.613 0 0 0-.032-.198.517.517 0 0 0-.145.04c-.087.035-.158.106-.196.283-.04.192-.03.469.046.822.024.111.054.227.09.346z"/>
+                </svg>
+                Open PDF / Download
+              </a>
+            </>
+          )}
         </div>
       </div>
-
-      {embedUrl && (
-        <div className="col-6 mt-4">
-          <h5>Demo Video</h5>
-          <div className="ratio ratio-16x9">
-            <iframe
-              src={embedUrl}
-              title="Demo Video"
-              allowFullScreen
-              loading="lazy"
-              sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
-              style={{ border: 'none' }}
-            />
-          </div>
-        </div>
-      )}
-
-      {instrument.pdf && (
-        <div className="col-6 mt-4">
-          <h5>Datasheet / Manual</h5>
-          <div style={{ border: '1px solid #e6eefb', padding: 8, borderRadius: 6 }}>
-            <a href={instrument.pdf} target="_blank" rel="noreferrer" className="d-block mb-2">Open PDF in new tab / Download</a>
-            {/* <div style={{ width: '100%', height: 500 }}>
-              <iframe src={instrument.pdf} title="Instrument PDF" width="100%" height="100%" style={{ border: 'none' }} />
-            </div> */}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

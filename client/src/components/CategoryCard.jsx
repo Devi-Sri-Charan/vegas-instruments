@@ -1,4 +1,3 @@
-// client/src/components/CategoryCard.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { makePublicUrl } from '../utils/url';
@@ -12,17 +11,24 @@ export default function CategoryCard(props) {
 
   const cardBody = (
     <div className="card category-card card-hover h-100">
-      <img src={displayImg} className="card-img-top" alt={name} style={{ height: 180, objectFit: 'cover' }} />
+      <img 
+        src={displayImg} 
+        className="card-img-top" 
+        alt={name} 
+        style={{ height: 200, objectFit: 'cover' }} 
+      />
       <div className="card-body d-flex flex-column">
-        <h5 className="card-title">{name}</h5>
-        <p className="card-text text-muted">{description}</p>
+        <h5 className="card-title" style={{ marginBottom: '0.5rem' }}>{name}</h5>
+        <p className="card-text text-muted" style={{ fontSize: '0.9rem', marginBottom: 0 }}>
+          {description}
+        </p>
       </div>
     </div>
   );
 
   if (category._id) {
     return (
-      <Link to={`/category/${category._id}`} className="text-decoration-none text-reset">
+      <Link to={`/category/${category._id}`} className="text-decoration-none">
         {cardBody}
       </Link>
     );

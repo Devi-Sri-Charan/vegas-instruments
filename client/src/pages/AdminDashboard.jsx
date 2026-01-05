@@ -1,4 +1,3 @@
-// client/src/pages/AdminDashboard.jsx
 import React, { useEffect, useState } from 'react';
 import api from '../api/api';
 import Toast from '../components/Toast';
@@ -20,7 +19,6 @@ export default function AdminDashboard() {
   const [saving, setSaving] = useState(false);
   const [catSaving, setCatSaving] = useState(false);
 
-  // PDF specific UI state
   const [pdfRemoved, setPdfRemoved] = useState(false);
   const [pdfName, setPdfName] = useState('No PDF selected');
 
@@ -141,7 +139,6 @@ export default function AdminDashboard() {
     }
   }
 
-  // Category logic unchanged...
   function startNewCategory() {
     setEditingCategory(null);
     setCatForm({ name: '', description: '' });
@@ -197,146 +194,301 @@ export default function AdminDashboard() {
 
   return (
     <div>
-      <h2>Admin Dashboard</h2>
+      <h2 style={{ fontWeight: 700, marginBottom: '2rem' }}>Admin Dashboard</h2>
       {toast && <Toast id="admin-toast" title={toast.title} message={toast.message} onClose={() => setToast(null)} />}
 
       <div className="row">
+        {/* Left column - Instruments */}
         <div className="col-md-8">
-          <div className="card p-3 mb-3">
+          <div className="admin-section">
             <h5>{selectedInstrument ? 'Edit Instrument' : 'Add Instrument'}</h5>
             <form onSubmit={submitInstrument}>
               <div className="row">
-                <div className="col-md-6 mb-2">
-                  <input className="form-control" placeholder="Name" value={formState.name} onChange={e => setFormState(s => ({ ...s, name: e.target.value }))} required />
+                <div className="col-md-6 mb-3">
+                  <label className="form-label">Name</label>
+                  <input 
+                    className="form-control" 
+                    placeholder="Instrument name" 
+                    value={formState.name} 
+                    onChange={e => setFormState(s => ({ ...s, name: e.target.value }))} 
+                    required 
+                  />
                 </div>
 
-                <div className="col-md-6 mb-2">
-                  <select className="form-control" value={formState.categoryId} onChange={e => setFormState(s => ({ ...s, categoryId: e.target.value }))} required>
+                <div className="col-md-6 mb-3">
+                  <label className="form-label">Category</label>
+                  <select 
+                    className="form-control" 
+                    value={formState.categoryId} 
+                    onChange={e => setFormState(s => ({ ...s, categoryId: e.target.value }))} 
+                    required
+                  >
                     <option value="">Select category</option>
                     {categories.map(c => <option key={c._id} value={c._id}>{c.name}</option>)}
                   </select>
                 </div>
 
-                <div className="col-12 mb-2">
-                  <textarea className="form-control" placeholder="Description" value={formState.description} onChange={e => setFormState(s => ({ ...s, description: e.target.value }))}></textarea>
+                <div className="col-12 mb-3">
+                  <label className="form-label">Description</label>
+                  <textarea 
+                    className="form-control" 
+                    placeholder="Product description" 
+                    rows="4"
+                    value={formState.description} 
+                    onChange={e => setFormState(s => ({ ...s, description: e.target.value }))}
+                  ></textarea>
                 </div>
 
-                <div className="col-md-6 mb-2">
-                  <input className="form-control" placeholder="YouTube link" value={formState.videoUrl} onChange={e => setFormState(s => ({ ...s, videoUrl: e.target.value }))} />
+                <div className="col-md-6 mb-3">
+                  <label className="form-label">YouTube Link</label>
+                  <input 
+                    className="form-control" 
+                    placeholder="https://youtube.com/..." 
+                    value={formState.videoUrl} 
+                    onChange={e => setFormState(s => ({ ...s, videoUrl: e.target.value }))} 
+                  />
                 </div>
 
-                <div className="col-md-3 mb-2">
+                <div className="col-md-3 mb-3">
+                  <label className="form-label">Stock Status</label>
                   <div className="form-check mt-2">
-                    <input className="form-check-input" type="checkbox" checked={formState.inStock} onChange={e => setFormState(s => ({ ...s, inStock: e.target.checked }))} id="instInStock" />
-                    <label className="form-check-label" htmlFor="instInStock">In Stock</label>
+                    <input 
+                      className="form-check-input" 
+                      type="checkbox" 
+                      checked={formState.inStock} 
+                      onChange={e => setFormState(s => ({ ...s, inStock: e.target.checked }))} 
+                      id="instInStock" 
+                    />
+                    <label className="form-check-label" htmlFor="instInStock">
+                      In Stock
+                    </label>
                   </div>
                 </div>
 
-                <div className="col-md-3 mb-2">
-                  <input id="imageFile" type="file" className="form-control" accept="image/*" />
+                <div className="col-md-3 mb-3">
+                  <label className="form-label">Image</label>
+                  <input 
+                    id="imageFile" 
+                    type="file" 
+                    className="form-control" 
+                    accept="image/*" 
+                  />
                 </div>
 
-                {/* PDF input + preview area (new) */}
-                <div className="col-md-12 mb-2">
+                <div className="col-md-12 mb-3">
                   <label className="form-label">Datasheet / PDF (optional)</label>
-                  <div className="d-flex align-items-center gap-2">
-                    <input id="pdfFile" type="file" className="form-control" accept="application/pdf"
-                      onChange={(e) => {
-                        const f = e.target.files && e.target.files[0];
-                        setPdfName(f ? f.name : (selectedInstrument?.pdf ? selectedInstrument.pdf.split('/').pop() : 'No PDF selected'));
-                        if (f) setPdfRemoved(false);
-                      }} />
-                    <div style={{ minWidth: 240 }}>
-                      <div className="form-text">{pdfName}</div>
-                      <div className="mt-1">
-                        {selectedInstrument && selectedInstrument.pdf && !pdfRemoved && (
-                          <a href={selectedInstrument.pdf} target="_blank" rel="noreferrer" className="me-2">Open current PDF</a>
-                        )}
-                        { (selectedInstrument && (selectedInstrument.pdf || pdfName !== 'No PDF selected')) && (
-                          <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => {
+                  <div className="d-flex align-items-start gap-3">
+                    <div style={{ flex: 1 }}>
+                      <input 
+                        id="pdfFile" 
+                        type="file" 
+                        className="form-control" 
+                        accept="application/pdf"
+                        onChange={(e) => {
+                          const f = e.target.files && e.target.files[0];
+                          setPdfName(f ? f.name : (selectedInstrument?.pdf ? selectedInstrument.pdf.split('/').pop() : 'No PDF selected'));
+                          if (f) setPdfRemoved(false);
+                        }} 
+                      />
+                      <div className="form-text mt-2">{pdfName}</div>
+                    </div>
+                    <div style={{ minWidth: 200 }}>
+                      {selectedInstrument && selectedInstrument.pdf && !pdfRemoved && (
+                        <a 
+                          href={selectedInstrument.pdf} 
+                          target="_blank" 
+                          rel="noreferrer" 
+                          className="btn btn-sm btn-outline-secondary d-block mb-2"
+                        >
+                          Open Current PDF
+                        </a>
+                      )}
+                      {(selectedInstrument && (selectedInstrument.pdf || pdfName !== 'No PDF selected')) && (
+                        <button 
+                          type="button" 
+                          className="btn btn-sm btn-outline-danger d-block" 
+                          onClick={() => {
                             setPdfRemoved(true);
                             const pdfEl = document.getElementById('pdfFile');
                             if (pdfEl) pdfEl.value = '';
                             setPdfName('No PDF selected');
-                          }}>
-                            Remove PDF
-                          </button>
-                        ) }
-                      </div>
+                          }}
+                        >
+                          Remove PDF
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
-
               </div>
 
-              <div className="mt-2">
-                <button className="btn btn-primary me-2" disabled={saving}>{saving ? 'Saving...' : (selectedInstrument ? 'Update Instrument' : 'Save Instrument')}</button>
-                <button type="button" className="btn btn-secondary" onClick={resetInstrumentForm}>Reset</button>
+              <div className="mt-3">
+                <button className="btn btn-primary me-2" disabled={saving}>
+                  {saving ? 'Saving...' : (selectedInstrument ? 'Update Instrument' : 'Save Instrument')}
+                </button>
+                <button type="button" className="btn btn-secondary" onClick={resetInstrumentForm}>
+                  Reset
+                </button>
               </div>
             </form>
           </div>
 
-          <div className="card p-3 mb-3">
+          <div className="admin-section">
             <h5>Existing Instruments</h5>
-            {loading ? 'Loading...' : (
-              <table className="table">
-                <thead><tr><th>Name</th><th>Category</th><th>Stock</th><th>Actions</th></tr></thead>
-                <tbody>
-                  {instruments.map(i => (
-                    <tr key={i._id}>
-                      <td>{i.name}</td>
-                      <td>{i.categoryId ? i.categoryId.name : '-'}</td>
-                      <td>{i.inStock ? 'In Stock' : 'Out of Stock'}</td>
-                      <td>
-                        <button className="btn btn-sm btn-outline-primary me-1" onClick={() => editInstrument(i)}>Edit</button>
-                        <button className="btn btn-sm btn-outline-warning me-1" onClick={() => toggleStock(i._id, i.inStock)}>{i.inStock ? 'Mark Out' : 'Mark In'}</button>
-                        <button className="btn btn-sm btn-outline-danger" onClick={() => deleteInstrument(i._id)}>Delete</button>
-                      </td>
+            {loading ? (
+              <div style={{ color: 'var(--text-grey)' }}>Loading...</div>
+            ) : (
+              <div className="table-responsive">
+                <table className="table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Category</th>
+                      <th>Stock</th>
+                      <th>Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {instruments.map(i => (
+                      <tr key={i._id}>
+                        <td>{i.name}</td>
+                        <td>{i.categoryId ? i.categoryId.name : '-'}</td>
+                        <td>
+                          <span style={{ 
+                            color: i.inStock ? 'var(--accent-green)' : '#ef4444',
+                            fontWeight: 500 
+                          }}>
+                            {i.inStock ? 'In Stock' : 'Out of Stock'}
+                          </span>
+                        </td>
+                        <td>
+                          <div className="btn-group btn-group-sm">
+                            <button 
+                              className="btn btn-outline-primary" 
+                              onClick={() => editInstrument(i)}
+                            >
+                              Edit
+                            </button>
+                            <button 
+                              className="btn btn-outline-warning" 
+                              onClick={() => toggleStock(i._id, i.inStock)}
+                            >
+                              {i.inStock ? 'Mark Out' : 'Mark In'}
+                            </button>
+                            <button 
+                              className="btn btn-outline-danger" 
+                              onClick={() => deleteInstrument(i._id)}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         </div>
 
+        {/* Right column - Categories and Actions */}
         <div className="col-md-4">
-          <div className="card p-3 mb-3">
+          <div className="admin-section">
             <h5>{editingCategory ? 'Edit Category' : 'Add Category'}</h5>
             <form onSubmit={submitCategory}>
-              <input className="form-control mb-2" placeholder="Name" value={catForm.name} onChange={e => setCatForm(s => ({ ...s, name: e.target.value }))} required />
-              <textarea className="form-control mb-2" placeholder="Description" value={catForm.description} onChange={e => setCatForm(s => ({ ...s, description: e.target.value }))}></textarea>
-              <input id="catImage" type="file" className="form-control mb-2" accept="image/*" />
-              <div className="d-flex">
-                <button className="btn btn-primary me-2" disabled={catSaving}>{catSaving ? (editingCategory ? 'Updating...' : 'Saving...') : (editingCategory ? 'Update Category' : 'Add Category')}</button>
-                {editingCategory && <button type="button" className="btn btn-secondary" onClick={() => { setEditingCategory(null); setCatForm({ name: '', description: '' }); }}>Cancel</button>}
+              <div className="mb-3">
+                <label className="form-label">Name</label>
+                <input 
+                  className="form-control" 
+                  placeholder="Category name" 
+                  value={catForm.name} 
+                  onChange={e => setCatForm(s => ({ ...s, name: e.target.value }))} 
+                  required 
+                />
+              </div>
+              
+              <div className="mb-3">
+                <label className="form-label">Description</label>
+                <textarea 
+                  className="form-control" 
+                  placeholder="Category description" 
+                  rows="3"
+                  value={catForm.description} 
+                  onChange={e => setCatForm(s => ({ ...s, description: e.target.value }))}
+                ></textarea>
+              </div>
+              
+              <div className="mb-3">
+                <label className="form-label">Image</label>
+                <input 
+                  id="catImage" 
+                  type="file" 
+                  className="form-control" 
+                  accept="image/*" 
+                />
+              </div>
+              
+              <div className="d-grid gap-2">
+                <button className="btn btn-primary" disabled={catSaving}>
+                  {catSaving ? (editingCategory ? 'Updating...' : 'Saving...') : (editingCategory ? 'Update Category' : 'Add Category')}
+                </button>
+                {editingCategory && (
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary" 
+                    onClick={() => { setEditingCategory(null); setCatForm({ name: '', description: '' }); }}
+                  >
+                    Cancel
+                  </button>
+                )}
               </div>
             </form>
 
-            <hr />
-            <h6 className="mt-2">Existing</h6>
-            <ul className="list-group">
-              {categories.map(c => (
-                <li className="list-group-item d-flex justify-content-between align-items-center" key={c._id}>
-                  <div>
-                    <strong>{c.name}</strong>
-                    <div className="text-muted" style={{ fontSize: '0.9rem' }}>{c.description}</div>
+            <div className="mt-4">
+              <h6 style={{ color: 'var(--text-white)', marginBottom: '1rem' }}>Existing Categories</h6>
+              <div className="list-group">
+                {categories.map(c => (
+                  <div className="list-group-item d-flex justify-content-between align-items-start" key={c._id}>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: 600, color: 'var(--text-white)', marginBottom: '0.25rem' }}>
+                        {c.name}
+                      </div>
+                      <div className="text-muted" style={{ fontSize: '0.875rem' }}>
+                        {c.description}
+                      </div>
+                    </div>
+                    <div className="btn-group btn-group-sm ms-2">
+                      <button 
+                        className="btn btn-outline-primary" 
+                        onClick={() => startEditCategory(c)}
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        className="btn btn-outline-danger" 
+                        onClick={() => deleteCategory(c._id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
-                  <div className="btn-group">
-                    <button className="btn btn-sm btn-outline-primary" onClick={() => startEditCategory(c)}>Edit</button>
-                    <button className="btn btn-sm btn-outline-danger" onClick={() => deleteCategory(c._id)}>Delete</button>
-                  </div>
-                </li>
-              ))}
-            </ul>
+                ))}
+              </div>
+            </div>
           </div>
 
-          <div className="card p-3">
+          <div className="admin-section">
             <h5>Admin Actions</h5>
-            <button className="btn btn-outline-secondary w-100" onClick={() => { localStorage.removeItem('vega_admin_token'); window.location.href = '/'; }}>Logout</button>
-            <div className="mt-2">
-              <button className="btn btn-sm btn-link" onClick={() => startNewCategory()}>+ Add New Category (quick)</button>
-            </div>
+            <button 
+              className="btn btn-secondary w-100" 
+              onClick={() => { 
+                localStorage.removeItem('vega_admin_token'); 
+                window.location.href = '/'; 
+              }}
+            >
+              Logout
+            </button>
           </div>
         </div>
       </div>

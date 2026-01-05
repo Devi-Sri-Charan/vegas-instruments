@@ -1,4 +1,3 @@
-// client/src/components/InstrumentCard.jsx
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { makePublicUrl } from '../utils/url';
@@ -14,12 +13,23 @@ export default function InstrumentCard(props) {
 
   const card = (
     <div className="card card-hover h-100">
-      <img loading="lazy" src={displayImg} className="card-img-top" alt={name} style={{ height: 200, objectFit: 'cover' }} />
+      <img 
+        loading="lazy" 
+        src={displayImg} 
+        className="card-img-top" 
+        alt={name} 
+        style={{ height: 220, objectFit: 'cover' }} 
+      />
       <div className="card-body d-flex flex-column">
-        <h5 className="card-title">{name}</h5>
-        <p className="card-text text-muted">{excerpt}</p>
+        <h5 className="card-title" style={{ marginBottom: '0.75rem' }}>{name}</h5>
+        <p className="card-text text-muted" style={{ fontSize: '0.9rem', marginBottom: '1rem' }}>
+          {excerpt}
+        </p>
         <div className="mt-auto">
-          <Link to={id ? `/instrument/${id}` : '#'} className="btn btn-outline-primary btn-sm">
+          <Link 
+            to={id ? `/instrument/${id}` : '#'} 
+            className="btn btn-primary btn-sm w-100"
+          >
             View Details
           </Link>
         </div>
@@ -27,9 +37,5 @@ export default function InstrumentCard(props) {
     </div>
   );
 
-  return (
-    <div className="col-md-4 mb-4">
-      {id ? <Link to={`/instrument/${id}`} className="text-decoration-none text-reset">{card}</Link> : card}
-    </div>
-  );
+  return card;
 }

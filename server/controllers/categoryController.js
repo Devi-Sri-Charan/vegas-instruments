@@ -1,34 +1,30 @@
 // server/controllers/categoryController.js
-const Instrument = require('../models/Instrument');
 const Category = require('../models/Category');
-const fs = require('fs');
-const path = require('path');
-
-const uploadsDir = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-
-async function saveLocalFile(file) {
-  if (!file || !file.originalname) return null;
-  const safeName = `${Date.now()}_${file.originalname.replace(/\s+/g, '_')}`;
-  const filepath = path.join(uploadsDir, safeName);
-  fs.writeFileSync(filepath, file.buffer);
-  return `/uploads/${safeName}`;
-}
-
-function makeAbsoluteUrl(req, relPath) {
-  if (!relPath) return relPath;
-  if (relPath.startsWith('http://') || relPath.startsWith('https://')) return relPath;
-  return `${req.protocol}://${req.get('host')}${relPath}`;
-}
+const Instrument = require('../models/Instrument');
+const { uploadBuffer } = require('../s3');
 
 exports.createCategory = async (req, res) => {
   try {
     const { name, description = '' } = req.body;
     if (!name) return res.status(400).json({ message: 'Name required' });
 
-    const imageFile = req.files?.image?.[0] || null;
-    const imageRel = imageFile ? await saveLocalFile(imageFile) : (req.body.image || '');
-    const imageUrl = imageRel ? makeAbsoluteUrl(req, imageRel) : '';
+    let imageUrl = req.body.image || '';
+    
+    // If image file uploaded, upload to S3
+    const imageFile = req.files?.image?.[0];
+    if (imageFile) {
+      try {
+        imageUrl = await uploadBuffer(
+          imageFile.buffer, 
+          imageFile.originalname, 
+          imageFile.mimetype,
+          'categories'
+        );
+      } catch (err) {
+        console.error('S3 upload error:', err);
+        return res.status(500).json({ message: 'Failed to upload image to S3' });
+      }
+    }
 
     const cat = new Category({ name, description, image: imageUrl });
     await cat.save();
@@ -46,13 +42,25 @@ exports.updateCategory = async (req, res) => {
     if (!cat) return res.status(404).json({ message: 'Category not found' });
 
     const { name, description } = req.body;
-    const imageFile = req.files?.image?.[0] || null;
+    const imageFile = req.files?.image?.[0];
 
+    // If new image file uploaded, upload to S3
     if (imageFile) {
-      const imageRel = await saveLocalFile(imageFile);
-      if (imageRel) cat.image = makeAbsoluteUrl(req, imageRel);
+      try {
+        const imageUrl = await uploadBuffer(
+          imageFile.buffer, 
+          imageFile.originalname, 
+          imageFile.mimetype,
+          'categories'
+        );
+        cat.image = imageUrl;
+      } catch (err) {
+        console.error('S3 upload error:', err);
+        return res.status(500).json({ message: 'Failed to upload image to S3' });
+      }
     } else if (req.body.image) {
-      cat.image = req.body.image.startsWith('http') ? req.body.image : makeAbsoluteUrl(req, req.body.image);
+      // If image URL provided in body
+      cat.image = req.body.image;
     }
 
     if (name !== undefined) cat.name = name;
@@ -66,8 +74,6 @@ exports.updateCategory = async (req, res) => {
   }
 };
 
-// server/controllers/categoryController.js
-// server/controllers/categoryController.js
 exports.deleteCategory = async (req, res) => {
   try {
     const id = req.params.id;
@@ -79,8 +85,7 @@ exports.deleteCategory = async (req, res) => {
       return res.status(404).json({ message: 'Category not found' });
     }
 
-    // Option A (recommended): keep instruments but clear their categoryId
-    // This prevents orphaned references from causing errors in queries that expect a categoryId.
+    // Clear categoryId from instruments to prevent orphaned references
     await Instrument.updateMany(
       { categoryId: id },
       { $set: { categoryId: null } }
@@ -92,7 +97,6 @@ exports.deleteCategory = async (req, res) => {
     res.status(500).json({ message: 'Error deleting category' });
   }
 };
-
 
 exports.listCategories = async (req, res) => {
   try {
